@@ -3,12 +3,23 @@ import csv
 import psycopg2
 import psycopg2.extras
 
-db_name = 'tester'
+#Windows work
+db_name = 'Fappdb'
 db_user = 'postgres'
 db_password = 'everyone'
 db_host = 'localhost'
 db_port = '5432'
 
+'''
+#macbook work (work laptop)
+db_name = 'tester'
+db_user = 'postgres'
+db_password = 'everyone'
+db_host = 'localhost'
+db_port = '5432'
+'''
+
+DBNAME = 'TRANX'
 
 class db:
     '''
@@ -25,11 +36,11 @@ class db:
 
         self.conn = psycopg2.connect(dbname=db_name, user=db_user, password=db_password, host=db_host)
         self.cur = self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-
-        # self.cur.execute("CREATE TABLE TRANX (id SERIAL PRIMARY KEY, name VARCHAR, total FLOAT, date DATE, type VARCHAR);")
+        #print(f'crating table TRANX')
+        #self.cur.execute("CREATE TABLE TRANX (id SERIAL PRIMARY KEY, name VARCHAR, total FLOAT, date DATE, type VARCHAR);")
 
         # response = cur.fetchall()
-        # self.conn.commit()
+        #self.conn.commit()
 
     def _create_table(self, table_name):
 
@@ -49,19 +60,21 @@ class db:
 
         for row in f:
             print(row)
-            if csv_file == "achase.csv":
+            if csv_file == "chase.csv":
                 dateA = row['Post Date']
                 amt = row['Amount']
                 names = row['Description']
                 self.cur.execute(
-                    "INSERT INTO trans (name,total,date) VALUES(%s,%s,%s)", (names, amt, dateA))
+                    #f'INSERT INTO {DBNAME} (name,total,date) VALUES {names,amt,dateA}')
+                    "INSERT INTO TRANX (name,total,date) VALUES(%s,%s,%s)", (names, amt, dateA))
                 self.conn.commit()
             else:
                 dateA = row['Date']
                 amt = row['Amount']
                 names = row['Name']
                 self.cur.execute(
-                    "INSERT INTO trans (name,total,date) VALUES(%s,%s,%s)", (names, amt, dateA))
+                    #f'INSERT INTO {DBNAME} (name,total,date) VALUES {names, amt, dateA}')
+                    "INSERT INTO TRANX (name,total,date) VALUES(%s,%s,%s)", (names, amt, dateA))
                 self.conn.commit()
 
         self.cur.close()
@@ -97,19 +110,22 @@ class db:
         self.conn = psycopg2.connect(dbname=db_name, user=db_user, password=db_password, host=db_host)
         self.cur = self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
-        self.cur.execute("SELECT * FROM trans;")
+        self.cur.execute(f"SELECT * FROM {DBNAME} WHERE {DBNAME}.type is NULL;")
         tranx = self.cur.fetchall()
         self.conn.commit()
+        print(len(tranx))
         for t in tranx:
             if t['total'] < 0:
                 tranx_type = input(f'|{t["name"]}| charged you {t["total"]}. How would you like to categorize it?')
-                print("UPDATE trans SET tran_type=%s WHERE id=%s", (tranx_type, t["id"]))
+                print(f"UPDATE {DBNAME} SET type={tranx_type} WHERE id={t['id']}")
                 self.cur.execute(
-                    "UPDATE trans SET tran_type=%s WHERE id=%s", (tranx_type, t["id"]))
+                    f'UPDATE {DBNAME} SET type={tranx_type} WHERE id={t["id"]}')
+                    #"UPDATE TRANX SET tran_type=%s WHERE id=%s", (tranx_type, t[s"id"]))
                 self.conn.commit()
             if t['total'] > 0:
                 self.cur.execute(
-                    "UPDATE trans SET tran_type=%s WHERE id=%s", ('paid', t["id"]))
+                    f'UPDATE {DBNAME} SET type=paid WHERE id={t["id"]}')
+                    #"UPDATE TRANX SET tran_type=%s WHERE id=%s", ('paid', t["id"]))
                 self.conn.commit()
         self.conn.close()
 
@@ -119,7 +135,8 @@ class db:
         names = input(f'what is the name of the transaction?')
         amt = input(f'What is the total of the transaction?')
         self.cur.execute(
-            "INSERT INTO trans (name,total) VALUES(%s,%s,%s)", (names, amt))
+            f'INSERT INTO {DBNAME} (name,total) VALUES ({names},{amt})')
+            #"INSERT INTO TRANX (name,total) VALUES(%s,%s,%s)", (names, amt))
         self.conn.commit()
         self.conn.close()
 
@@ -145,7 +162,8 @@ class db:
         self.cur = self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
         self.cur.execute(
-            "SELECT * FROM trans WHERE tran_type in ('1')")
+            f'SELECT * FROM {DBNAME} WHERE tran_type  in ("1")')
+            #"SELECT * FROM TRANX WHERE tran_type in ('1')")
         cur = self.cur.fetchall()
         self.sum = 0
         for row in cur:
@@ -153,7 +171,8 @@ class db:
         print(f'sum of the essentials for Janurary 1 - March 11 = {self.sum}')
 
         self.cur.execute(
-            "SELECT * FROM trans WHERE tran_type in ('4')")
+            f'SELECT * FROM {DBNAME} WHERE tran_type  in ("4")')
+            #"SELECT * FROM TRANX WHERE tran_type in ('4')")
         cur = self.cur.fetchall()
         self.weed_sum = 0
         for row in cur:
@@ -296,17 +315,6 @@ class checking:
                 total = total + int(float(list[1][0]))
         print("total cash withdrawn:", total)
 
-
-# connor = checking()
-# connor.open_file()
-
-# connor.cash_out()
-# connor.sum_debits_and_credits()
-
-# brad = VISA()
-# brad.sum_debits_and_credits()
-# brad.sort_transactions()
-
 done = True
 db = db()
 finished = False
@@ -323,5 +331,5 @@ while done:
         db.sort_transactions()
     elif int(option1) == 4:
         db.view_table()
-    if finished == "true":
+    if finished == "yes":
         done = False
