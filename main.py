@@ -95,7 +95,7 @@ class db:
             1: essentials (rent, electricity)
             2: gas
             3: essential food
-            4: weed money
+            4: fun money
             5: eating out
             6:toby
             7:gifts/kindness
